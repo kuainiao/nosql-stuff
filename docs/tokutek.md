@@ -1,8 +1,9 @@
 ## Tokutek
 
+  - http://www.tokutek.com/resources/technology/
 
 
-## Videos:
+## TokuDB:
 
   - [Tokutek on Vimeo](http://vimeo.com/user6997348)
   - [Lawrence Schwartz - Strata 2013 - theCUBE, 04.03.2013](http://www.youtube.com/watch?v=0zMvRRP5mwc&list=PL419E1B92998A57AC)
@@ -11,3 +12,18 @@
   - [Elephants on a Trapeze: Keeping Big Data Agile by Martin Farach-Colton of Tokutek,  01.06.2011](http://www.youtube.com/watch?v=tMVpIwbaW-A)
   - [Understanding Indexing: Three rules on making indexes,  21.08.2012](http://www.youtube.com/watch?v=vaGAoK66ctM)
   - [Fractal Tree Indexing Overview - SF MySQL Meetup](http://vimeo.com/26471692)
+
+
+## TokuMX:
+
+
+
+## TokuFS:
+  - https://www.usenix.org/conference/hotstorage12/tokufs-streaming-file-system
+  - https://www.usenix.org/system/files/conference/hotstorage12/hotstorage12-final52.pdf
+  - http://www.tokutek.com/wp-content/uploads/2012/09/BenderKuszmaul-tutorial-xldb12.pdf
+
+
+Engineers:
+  - https://github.com/leifwalsh
+  - https://github.com/esmet
