@@ -12,6 +12,10 @@
       Simple comparison: Redis vs. MongoDB vs. Riak vs. Cassandra vs. CouchDB
        2 commits, last change: 2013-03-14 11:05:14, 3 stars, 0 forks
 
+    groupon/locality-uuid.rb:
+
+       4 commits, last change: 2013-05-09 21:43:03, 8 stars, 0 forks
+
     igrigorik/bloomfilter-rb:
       BloomFilter(s) in Ruby: Native counting filter + Redis counting/non-counting filters
        101 commits, last change: 2013-08-19 10:51:01, 254 stars, 36 forks
