@@ -1,0 +1,358 @@
+#!/bin/bash
+#
+#  mongodb-backup is a backup script for MongoDB database
+#  Version : 0.2
+#
+#  Apache License, Version 2.0
+#
+#  Copyright (C) 2013 - Twenga SA
+#  Copyright (C) 2013 - Michael Lopez <mickael.lopez@gmail.com>
+#
+#  Licensed under the Apache License, Version 2.0 (the "License");
+#  you may not use this file except in compliance with the License.
+#  You may obtain a copy of the License at
+#
+#  http://www.apache.org/licenses/LICENSE-2.0
+#
+#  Unless required by applicable law or agreed to in writing, software
+#  distributed under the License is distributed on an "AS IS" BASIS,
+#  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+#  See the License for the specific language governing permissions and
+#  limitations under the License.
+#
+###########################################################################
+
+############################################################################
+#      Please edit /etc/mongodb-backup.conf according to your needs       #
+###########################################################################
+
+PROGNAME=$(basename $0)
+DATE=$(date +%Y-%m-%d)
+CONF="/etc/mongodb-backup.conf"
+PID_FILE="/var/run/mongodb-backup.pid"
+STOP_BALANCER_JS="/usr/local/lib/stopBalancer.js"
+DUMP_OPTIONS=""
+OPTIONS=""
+NB_ERRORS=0
+NB_FILE=0
+
+## Check if mongo binary is present
+which mongo &> /dev/null ; isInstalled=$?
+
+if [ "$isInstalled" == 1 ] ; then
+	echo -e "\nCan't find mongodb client... aborting!"
+	exit 1
+fi
+
+## Check if /etc/mongodb-backup.conf is present
+if [ ! -s "$CONF" ] ; then
+	echo -e "\n$CONF is missing or empty... failed!"
+	exit 1
+else
+	source $CONF
+fi	
+
+## Log file 
+LOG_FILE="${LOGS_DIR}/mongodb-backup_${DATE}.log"
+
+
+###########################################################################
+#                                Functions                                #
+###########################################################################
+
+function usage() {
+	echo -e "Usage: $PROGNAME [options] ...\n"
+        echo "Options are..."
+	echo -e "   -h \t Display this help message"
+	echo -e "   -j \t Enable dump journalisation"
+	echo -e "   -e \t Display events to STDOUT"
+	echo -e "   -m <mail_address> \t Set email reporting address"
+	echo -e "   -c <compression_level>\t Override compression level: normal, fast or best (default: normal)"
+	echo -e "   -u <username>" 
+	echo -e "   -p <password>"
+}
+
+function log {
+	echo -e "$(date +%D" "%T) $1" >> $LOG_FILE
+	if [ "$DISPLAY_ERRORS" ] ; then
+	       echo -e "$1"	
+	fi       
+}
+
+function check_running {
+	if [ -f $PID_FILE ] ; then
+		PID=$(cat $PID_FILE)
+		ps -A | grep $PID &> /dev/null ; isRunning=$?
+		if [ "$isRunning" -eq "0" ] ; then
+			return 0
+		else
+			rm -f $PID_FILE
+		fi
+	fi
+	
+	return 1
+}
+
+function check_is_master {
+	isMaster=$(mongo --host $1 --eval "printjson(rs.isMaster())" | grep ismaster | sed 's/[\t",]//g' | awk '{print $3}') 
+	echo $isMaster
+}
+
+function pickup_secondary {
+	slaves=$(mongo --host $1 --eval "printjson(rs.status())" | grep -B3 SECONDARY | grep name | sed 's/[\t",]//g' | awk '{print $3}')
+	slave=$(shuf -e $slaves -n 1)
+	echo $slave
+}
+
+function prepare_job {
+	log "Preparing mongodb backup job..."
+
+	case "${COMPRESS_LVL}" in
+		fast)   log "Info : Fast comppression was chosen"
+			COMPRESS_LVL="-1"
+    		;;
+		normal) log  "Info : Normal compression was chosen"
+    			COMPRESS_LVL="-5"
+    		;;
+		best)   log "Info : Best compression was chosen"
+    			COMPRESS_LVL="-9"
+		;;
+		*) log "Info : Default compression was chosen"
+    			COMPRESS_LVL="-5"
+   		;;
+	esac
+
+	# Do we need to use a username/password?
+	if [ "$USERNAME" ] ; then 
+		OPTIONS="${OPTIONS} --username=$USERNAME --password=$PASSWORD"
+	fi
+
+        if [ "$MONGOS_HOST" != "localhost" ] ; then
+		MONGOS_OPT="${OPTIONS} --host ${MONGOS_HOST}"
+	fi
+
+	# Try to connect
+	mongo $MONGOS_OPT --eval "printjson()" &> /dev/null ; tryConnection=$?
+	if [ "$tryConnection" -eq 1 ] ; then
+		log "Critical: Unable to connect on ${MONGOS_HOST}. Please check if mongos is running or check 'MONGOS_HOST' option in /etc/mongodb-backup.conf"
+		exit 1
+	fi
+
+
+	if [ "$NB_SHARD" -ne 0 ] ; then
+		for (( n=1; n<=$NB_SHARD; n++ )) ; do
+			SHARD_HOSTS[$n]=$(eval "echo \$SHARD${n}_HOST")
+			SHARD_NAMES[$n]=$(eval "echo \$SHARD${n}_NAME")
+
+			# Check if value of SHARD_* array is not empty
+			if [ "${SHARD_HOSTS[$n]}" == "" ] || [ "${SHARD_NAMES[$n]}" == "" ] ; then
+				log "Critical: Wrong shard configuration in /etc/mongodb-backup.conf file. Please check the shard options in file."
+				exit 1
+			fi
+		done
+		log "Info : ${NB_SHARD} shard has been selected for backup."
+	fi
+}
+
+function finish_up {
+	do_tarball
+	END_TIME=$(date +%s)
+	TIME_DIFF=$(( $END_TIME - $START_TIME ))
+	TIME_DIFF=`echo $(($TIME_DIFF / 60 ))`
+	log "Finished MongoDB backup in $TIME_DIFF minutes..."
+	send_mail
+	rm -f $PID_FILE >> $LOG_FILE
+	exit 0
+}
+
+function do_tarball {
+	log "Starting compression..."
+	cd $BACKUP_DIR
+	i=0
+	for DIR in ${DIRECTORIES[@]} ; do
+		if [ -d "$DIR" ] ; then
+			FILES[$i]=$(tar -cf - $DIR | gzip ${COMPRESS_LVL} - > ${DIR}_${DATE}.tar.gz)
+			rm -fr ${DIR}/ &> /dev/null
+		else
+			log "Error : ${DIR} doesn't exist."
+			let NB_ERRORS++
+		fi
+		let i++
+	done
+	NB_FILE=${#FILES[@]} 
+	check_retention
+}
+
+function check_retention {
+	if [ $MAX_BACKUP_RETENTION -gt 0 ] ; then
+    		log "Checking retention of backups..."
+    		toDelete=$(find $BACKUP_DIR -name "*.tar.gz" -type f -mtime +$MAX_BACKUP_RETENTION)
+      		if [ ! -z "$toDelete" ] ; then
+        		log "Deleting files older than ${MAX_BACKUP_RETENTION} days:"
+			log "$(find $BACKUP_DIR -name "*.tar.gz" -type f -mtime +$MAX_BACKUP_RETENTION -exec du -hs {} \;)" 
+       			find $BACKUP_DIR -name "*.tar.gz" -type f -mtime +$MAX_BACKUP_RETENTION -delete
+      		fi
+	else
+		log "Info : Retention is disable."
+	fi
+}
+
+function send_mail {
+	if [ "$REPORT_EMAIL" ] && [ -n ${REPORT_EMAIL+x}  ] ; then
+		log "Sending email notifications..."
+	    	echo "Backup time: $TIME_DIFF minutes" > /tmp/$PROGNAME_mail.tmp
+	    	echo -e "disk usage:  (size : usage : avail : percent : parent) \n $(df -h $BACKUP_DIR | tail -1)" >> /tmp/$PROGNAME_mail.tmp 
+
+	       	sizeOfBackupDir=$(du -hs $BACKUP_DIR | awk '{print $1}')
+	        sizeOfBackup=$(find $BACKUP_DIR -name "*_${DATE}.tar.gz" -type f -exec du -hs {} \;)
+	        echo "Backup host:  $(hostname)" >> /tmp/$PROGNAME_mail.tmp
+	        echo "Number of backup files :  $NB_FILE" >> /tmp/$PROGNAME_mail.tmp
+	        echo -e "Backup size:\n$sizeOfBackup" >> /tmp/$PROGNAME_mail.tmp
+	        echo "Backup directory size : $sizeOfBackupDir" >> /tmp/$PROGNAME_mail.tmp
+	        echo -e "\nnumber of erros/warning : $NB_ERRORS \nCheck log file for more details : $LOG_FILE" >> /tmp/$PROGNAME_mail.tmp
+	   	
+		SUBJECT="[MongoDB Backup] Report -> Host:  $(hostname) - errors: $NB_ERRORS - runtime: $TIME_DIFF minutes"
+	      	mail -s "$SUBJECT" "$REPORT_EMAIL" < /tmp/$PROGNAME_mail.tmp
+	        if [ $? -eq "0" ] ; then
+	        	log "Email notification successfully sent."
+	        fi
+	      	rm -f /tmp/$PROGNAME_mail.tmp
+	fi
+}
+
+function stop_balancer {
+	log "Stopping MongoDB balancer..."
+	if [ ! -f "$STOP_BALANCER_JS" ] ; then
+        	log "Error : ${STOP_BALANCER_JS} dosn't exists !"
+        	log "Error : Balancer hasn't been stopped"
+		let NB_ERRORS++
+      	else
+		balancerState=$(get_balancer_state)
+        	if [ "$balancerState" == "true" ] ; then
+            		mongo $MONGOS_OPT config $STOP_BALANCER_JS >> $LOG_FILE
+         	else
+			log "Warning : Balancer is already shutdown !"
+			let NB_ERRORS++
+		fi
+	fi
+}
+
+function start_balancer {
+	log "Restarting MongoDB balancer..."
+	balancerState=$(get_balancer_state)
+        if [ "$balancerState" == "false" ] ; then
+        	mongo $MONGOS_OPT config --eval "sh.setBalancerState(true)" &> /dev/null
+		sleep 10
+		balancerState=$(get_balancer_state)
+		if [ "$balancerState" == "false" ] ; then
+			log "Error :: I couldn't start the balancer"
+			log "Error :: Please check manually !!"
+			let NB_ERRORS++
+		fi
+        else
+		log "Warning : Balancer is already running"
+		let NB_ERRORS++
+	fi
+}
+
+function get_balancer_state {
+	mongo $MONGOS_OPT admin --eval "sh.getBalancerState()" | tail -1 
+}
+
+###########################################################################
+#                              Options checks                             #
+###########################################################################
+
+while getopts ":hjerm:c:u:p:" opt ; do
+        case "$opt" in
+		h) usage >&2 ; exit 0;;
+		j) DUMP_OPTIONS="--journal" >&2
+		;;	
+		e) DISPLAY_ERRORS=true >&2
+		;;
+		m) REPORT_EMAIL=$OPTARG >&2
+		;;	
+		c) COMPRESS_LVL=$OPTARG >&2
+		;;	
+		u) USERNAME=$OPTARG >&2
+		;;
+		p) PASSWORD=$OPTARG >&2 
+		;; 	
+		\?) echo "Invalid option: -$OPTARG" >&2
+		exit 1;;
+		:)  echo "Option -$OPTARG requires an argument." >&2
+		exit 1;;
+	esac
+done
+
+## Check email 
+if [ "$REPORT_EMAIL" ] && [ -n ${REPORT_EMAIL+x} ] ; then
+	CHECK_EMAIL=$(echo $REPORT_EMAIL | egrep "^(([-a-zA-Z0-9\!#\$%\&\'*+/=?^_\`{\|}~])+\.)*[-a-zA-Z0-9\!#\$%\&\'*+/=?^_\`{\|}~]+@\w((-|\w)*\w)*\.(\w((-|\w)*\w)*\.)*\w{2,4}$")
+	if [ "x$CHECK_EMAIL" = "x" ]; then 
+		echo -e "\nInvalid email format...failed!"
+		usage
+		exit 1
+	fi	
+fi
+
+## Check compression lvl
+if [ "$COMPRESS_LVL" != "normal" ] && [ "$COMPRESS_LVL" != "fast" ] && [ "$COMPRESS_LVL" != "best" ] ; then
+	echo -e "\nBad compression level... what did you do ?!"
+	echo "Valid values: fast, normal or best"
+	usage
+	exit 1
+fi
+
+
+###########################################################################
+#                                   BEGIN                                 #
+###########################################################################
+
+check_running ; isRunning=$?  
+
+if [ "$isRunning" -eq 0 ] ; then
+	log "MongoDB backup is already running"
+	exit
+else
+	echo "$$" > $PID_FILE
+	START_TIME=$(date +%s)
+
+	if [ ! -d "$BACKUP_DIR" ] ; then
+                mkdir -p $LOGS_DIR
+        elif [ ! -d $LOGS_DIR ] ; then
+                mkdir $LOGS_DIR
+        fi
+
+	echo "--------------------------------------------------------------------------------" > $LOG_FILE
+	log "MongoDB backup start at $(date +%H:%M:%S)"
+	prepare_job
+	stop_balancer
+	log "Starting backups..."
+	mongodump $MONGOS_OPT $DUMP_OPTIONS --db config --out $BACKUP_DIR/config &> /dev/null ; CFG_RETURN=$?	
+	DIRECTORIES[0]="config" 
+	if [ "$CFG_RETURN" -ne "0" ] ; then
+        	log "Error : CFG backup failed !"
+		let NB_ERRORS++
+        fi
+	if [ "$NB_SHARD" -ne "0" ] ; then 
+		i=1
+		for SHARD in ${SHARD_HOSTS[@]} ; do 
+			isMaster=$(check_is_master $SHARD)
+			if [ "$isMaster" == "true" ] ; then
+				log "${SHARD} is master of replicaSet. Pickup a slave host..."
+				SHARD=$(pickup_secondary $SHARD)
+				log "${SHARD} has been selected."
+			fi
+			mongodump --host $SHARD $OPTIONS $DUMP_OPTIONS --oplog --out $BACKUP_DIR/$(eval "echo \$SHARD${i}_NAME") &> /dev/null ; SHARD_RETURN=$?	
+			DIRECTORIES[$i]=$(eval "echo \$SHARD${i}_NAME")
+			if [ "$SHARD_RETURN" -ne "0" ] ; then
+				log "Error : ${SHARD} backup failed !"
+				let NB_ERRORS++
+			fi
+			let i++
+		done
+	fi
+	log "Info: Backups are finished"
+	start_balancer
+	finish_up
+fi
