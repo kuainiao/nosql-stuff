@@ -6,17 +6,21 @@
 
     ajdavis/cluster-profile:
       Demo scripts for setting up and profiling a sharded MongoDB cluster.
-       18 commits, last change: 2013-06-21 10:13:55, 2 stars, 0 forks
+       18 commits, last change: , 8 stars, 0 forks
 
     citrusbyte/redis-comparison:
       Simple comparison: Redis vs. MongoDB vs. Riak vs. Cassandra vs. CouchDB
-       2 commits, last change: 2013-03-14 11:05:14, 2 stars, 0 forks
+       2 commits, last change: 2013-03-14 11:05:14, 3 stars, 0 forks
 
     igrigorik/bloomfilter-rb:
       BloomFilter(s) in Ruby: Native counting filter + Redis counting/non-counting filters
-       97 commits, last change: 2013-04-05 10:05:12, 250 stars, 34 forks
+       101 commits, last change: 2013-08-19 10:51:01, 254 stars, 36 forks
 
     krestenkrab/hanoidb:
       Erlang LSM BTree Storage
-       345 commits, last change: 2012-09-27 04:53:44, 130 stars, 26 forks
+       345 commits, last change: 2012-09-27 04:53:44, 137 stars, 28 forks
+
+    Twenga/mongodb-backup:
+
+       4 commits, last change: 2013-08-02 15:12:05, 0 stars, 1 forks
 <!-- PROJECTS_LIST_END -->
