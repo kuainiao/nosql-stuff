@@ -12,6 +12,10 @@
       Simple comparison: Redis vs. MongoDB vs. Riak vs. Cassandra vs. CouchDB
        2 commits, last change: 2013-03-14 11:05:14, 3 stars, 0 forks
 
+    dropbox/hydra:
+      Multi-process MongoDB collection copier
+       1 commits, last change: 2013-09-09 16:05:53, 94 stars, 4 forks
+
     groupon/locality-uuid.rb:
 
        4 commits, last change: 2013-05-09 21:43:03, 8 stars, 0 forks
