@@ -18,3 +18,6 @@
 
 ### Multi-Tenant
   - http://support.mongohq.com/use-cases/multi-tenant.html
+
+### Schema Design:
+  - [Data Modeling Examples in the Real World, 2013.08](http://www.mongodb.com/presentations/webinar-data-modeling-examples-real-world)
