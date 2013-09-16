@@ -16,6 +16,10 @@
       Multi-process MongoDB collection copier
        1 commits, last change: 2013-09-09 16:05:53, 94 stars, 4 forks
 
+    failshell/mongolvmsnapback:
+      MongoDB sharded cluster LVM snapshot backup tool
+       4 commits, last change: 2013-05-27 08:14:23, 0 stars, 0 forks
+
     groupon/locality-uuid.rb:
 
        4 commits, last change: 2013-05-09 21:43:03, 8 stars, 0 forks
