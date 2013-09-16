@@ -5,3 +5,4 @@ https://github.com/groupon/locality-uuid.rb.git
 https://github.com/igrigorik/bloomfilter-rb.git
 https://github.com/krestenkrab/hanoidb.git
 https://github.com/Twenga/mongodb-backup.git
+https://github.com/failshell/mongolvmsnapback.git
