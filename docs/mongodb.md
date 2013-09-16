@@ -15,6 +15,8 @@
   - [MongoDB: The Definitive Guide, 2nd Edition](http://shop.oreilly.com/product/0636920028031.do)
 
 
+### Backups
+  - [MongoDB LVM snapshot backups and restores](http://failshell.io/mongodb/mongodb-lvm-snapshot-backups-and-restores/)
 
 ### Multi-Tenant
   - http://support.mongohq.com/use-cases/multi-tenant.html
