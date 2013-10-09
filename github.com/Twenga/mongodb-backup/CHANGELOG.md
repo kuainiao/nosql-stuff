@@ -1,4 +1,12 @@
 # Changelog
+## v0.3.1 - 16/09/2013
+   * Fix picking secondary function when a server is alone in replicatSet
+
+## v0.3.0 - 13/09/2013
+   * Multithreading dump
+   * Log retention
+   * Use lower CamelCase for functions and non-global variable
+
 ## v0.2.0 - 02/08/2013
    * Fix unzip backup tarball problem
    * Display events to stdout
