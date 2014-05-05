@@ -6,33 +6,33 @@
 
     ajdavis/cluster-profile:
       Demo scripts for setting up and profiling a sharded MongoDB cluster.
-       18 commits, last change: , 8 stars, 0 forks
+       18 commits, last change: , 10 stars, 0 forks
 
     citrusbyte/redis-comparison:
       Simple comparison: Redis vs. MongoDB vs. Riak vs. Cassandra vs. CouchDB
-       2 commits, last change: 2013-03-14 11:05:14, 3 stars, 0 forks
+       2 commits, last change: , 6 stars, 1 forks
 
     dropbox/hydra:
-      Multi-process MongoDB collection copier
-       1 commits, last change: 2013-09-09 16:05:53, 94 stars, 4 forks
+      A multi-process MongoDB collection copier.
+       1 commits, last change: , 266 stars, 24 forks
 
     failshell/mongolvmsnapback:
       MongoDB sharded cluster LVM snapshot backup tool
-       4 commits, last change: 2013-05-27 08:14:23, 0 stars, 0 forks
+       4 commits, last change: , 3 stars, 1 forks
 
     groupon/locality-uuid.rb:
 
-       4 commits, last change: 2013-05-09 21:43:03, 8 stars, 0 forks
+       4 commits, last change: , 10 stars, 0 forks
 
     igrigorik/bloomfilter-rb:
       BloomFilter(s) in Ruby: Native counting filter + Redis counting/non-counting filters
-       101 commits, last change: 2013-08-19 10:51:01, 254 stars, 36 forks
+       103 commits, last change: , 292 stars, 42 forks
 
     krestenkrab/hanoidb:
       Erlang LSM BTree Storage
-       345 commits, last change: 2012-09-27 04:53:44, 137 stars, 28 forks
+       349 commits, last change: , 161 stars, 29 forks
 
     Twenga/mongodb-backup:
 
-       4 commits, last change: 2013-08-02 15:12:05, 0 stars, 1 forks
+       21 commits, last change: , 0 stars, 2 forks
 <!-- PROJECTS_LIST_END -->
