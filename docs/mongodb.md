@@ -14,6 +14,8 @@
 ### Books
   - [MongoDB: The Definitive Guide, 2nd Edition](http://shop.oreilly.com/product/0636920028031.do)
 
+## Modelling
+  - [Product Catalog Part1, 2014.07, great examples](http://edgystuff.tumblr.com/post/91964246640/product-catalog-part-1-schema-design)
 
 ### Backups
   - [MongoDB LVM snapshot backups and restores](http://failshell.io/mongodb/mongodb-lvm-snapshot-backups-and-restores/)
