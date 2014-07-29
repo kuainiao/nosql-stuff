@@ -18,6 +18,14 @@
 
 
 
+## Admin Tipps
+  - http://www.mysqlperformanceblog.com/2014/07/23/why-tokudb-hates-transparent-hugepages/
+  - http://www.mysqlperformanceblog.com/2014/07/22/reference-architecture-for-a-write-intensive-mysql-deployment/
+    Software:
+    OS: Ubuntu 12.04 LTS
+    MySQL: Percona Server 5.6.19 + TokuDB
+    Backup: LVM partitions + mylvmbackup
+
 ## TokuFS:
   - https://www.usenix.org/conference/hotstorage12/tokufs-streaming-file-system
   - https://www.usenix.org/system/files/conference/hotstorage12/hotstorage12-final52.pdf
