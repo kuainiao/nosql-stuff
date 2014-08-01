@@ -16,6 +16,9 @@
 
 ## Modelling
   - [Product Catalog Part1, 2014.07, great examples](http://edgystuff.tumblr.com/post/91964246640/product-catalog-part-1-schema-design)
+  - https://www.mongodb.com/presentations/retail-reference-architecture-part-1-flexible-searchable-low-latency-product-catalog
+  - http://www.mongodb.com/presentations/retail-reference-architecture-part-2-real-time-geo-distributed-inventory
+  - http://www.mongodb.com/presentations/retail-reference-architecture-part-3-scalable-insight-component-providing-user-history
 
 ### Backups
   - [MongoDB LVM snapshot backups and restores](http://failshell.io/mongodb/mongodb-lvm-snapshot-backups-and-restores/)
