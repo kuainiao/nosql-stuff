@@ -5,3 +5,8 @@
 
 # Security
   - https://hkorte.github.io/slides/es-security/
+
+
+# Modelling for Ecommerce
+  - https://techblog.livingsocial.com/presentations/elasticsearch/index.html - great presentation from LivingSocial
+
