@@ -9,4 +9,5 @@
 
 # Modelling for Ecommerce
   - https://techblog.livingsocial.com/presentations/elasticsearch/index.html - great presentation from LivingSocial
+  - https://techblog.livingsocial.com/blog/2014/04/14/elastic-search-dc-meetup-elasticsearch-for-ecommerce-applications/ (video)
 
